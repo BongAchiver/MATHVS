@@ -34,7 +34,9 @@ export function createStore(
     CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), expires INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS matches (id TEXT PRIMARY KEY, mode TEXT NOT NULL, discipline TEXT NOT NULL, ranked INTEGER NOT NULL, created_at INTEGER NOT NULL, payload TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS match_players (match_id TEXT NOT NULL REFERENCES matches(id), user_id INTEGER NOT NULL REFERENCES users(id), PRIMARY KEY(match_id,user_id));
-    CREATE INDEX IF NOT EXISTS match_user_idx ON match_players(user_id);`);
+    CREATE INDEX IF NOT EXISTS match_user_idx ON match_players(user_id);
+    CREATE TABLE IF NOT EXISTS question_exposures (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), discipline TEXT NOT NULL, template_id TEXT NOT NULL, question_key TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS exposure_user_idx ON question_exposures(user_id,discipline,id);`);
   const publicUser = (row) =>
     row
       ? {
@@ -54,6 +56,33 @@ export function createStore(
     db,
     user,
     publicUser,
+    recentQuestions(ids, discipline) {
+      if (!ids.length) return [];
+      return db
+        .prepare(
+          `SELECT template_id AS templateId, question_key AS key FROM question_exposures WHERE user_id IN (${ids.map(() => "?").join(",")}) AND discipline=? ORDER BY id ASC`,
+        )
+        .all(...ids, discipline);
+    },
+    rememberQuestions(ids, discipline, questions) {
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        const insert = db.prepare(
+          "INSERT INTO question_exposures(user_id,discipline,template_id,question_key) VALUES(?,?,?,?)",
+        );
+        for (const id of ids) {
+          for (const q of questions)
+            insert.run(id, discipline, q.templateId, q.key);
+          db.prepare(
+            "DELETE FROM question_exposures WHERE user_id=? AND discipline=? AND id NOT IN (SELECT id FROM question_exposures WHERE user_id=? AND discipline=? ORDER BY id DESC LIMIT 180)",
+          ).run(id, discipline, id, discipline);
+        }
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
     async register(username, password) {
       const hash = await passwordHash(password);
       const info = db

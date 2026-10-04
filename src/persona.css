@@ -683,9 +683,49 @@ a:focus-visible {
   color: white;
   font-weight: 700;
 }
+.math-matrix {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-left: 3px solid #8af7ff;
+  background: #041137;
+  font: 500 clamp(14px, 2vw, 20px) / 1.6 monospace;
+  white-space: pre;
+}
 .answer-option {
   border-color: #4483b5;
   background: #071944;
+  min-width: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.answer-option span:first-child {
+  flex-shrink: 0;
+}
+.answer-grid-prose {
+  grid-template-columns: 1fr;
+}
+.question-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8af7ff;
+}
+.question-meta span {
+  border: 1px solid #4483b5;
+  padding: 4px 9px;
+  background: #071944;
+}
+.discipline-topics {
+  color: #abd8ed;
+  font-size: 12px;
+  line-height: 1.65;
+  margin: -4px 0 20px;
 }
 .answer-option:hover {
   background: #0c3675;

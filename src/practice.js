@@ -1,4 +1,24 @@
 import { makeQuestions, publicQuestion, isCorrect } from "../shared/game.js";
+import { rememberQuestions } from "../shared/questions/index.js";
+const memoryHistory = {};
+function practiceQuestions(config) {
+  const key = `mathvs-question-history-v1-${config.discipline}`;
+  let history = memoryHistory[key] || [];
+  try {
+    const stored = JSON.parse(localStorage.getItem(key) || "[]");
+    if (Array.isArray(stored)) history = stored.slice(-180);
+  } catch {
+    /* Practice also works when storage is unavailable. */
+  }
+  const questions = makeQuestions(config, Date.now(), history);
+  memoryHistory[key] = rememberQuestions(history, questions);
+  try {
+    localStorage.setItem(key, JSON.stringify(memoryHistory[key]));
+  } catch {
+    /* Keep the in-memory history. */
+  }
+  return questions;
+}
 export function createPractice(config) {
   const startedAt = Date.now() + 3000;
   return {
@@ -8,7 +28,7 @@ export function createPractice(config) {
     offline: true,
     startedAt,
     deadline: startedAt + config.duration * 1000,
-    questions: makeQuestions(config),
+    questions: practiceQuestions(config),
     answers: [],
     index: 0,
     score: 0,

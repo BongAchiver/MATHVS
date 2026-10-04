@@ -33,6 +33,7 @@ import {
 } from "./practice.js";
 import { effect, setAudio } from "./audio.js";
 import Arena from "./Arena.jsx";
+import { BANK_STATS } from "../shared/questions/index.js";
 import { useSceneNavigation } from "./useSceneNavigation.js";
 import "./styles.css";
 import "./extras.css";
@@ -805,14 +806,30 @@ function App() {
                           ))}
                         </div>
                       )}
+                      <div className="question-meta">
+                        <span>{question?.topic}</span>
+                        <span>{question?.kind}</span>
+                      </div>
                       <h2
                         className="question-text"
                         key={`${game.id}-${currentIndex}`}
                       >
-                        {question?.prompt}
+                        {question?.prompt
+                          .split(/(\[[^\]]*;[^\]]*\])/)
+                          .map((part, i) =>
+                            part.startsWith("[") && part.includes(";") ? (
+                              <span className="math-matrix" key={i}>
+                                {part.replaceAll(";", ";\n")}
+                              </span>
+                            ) : (
+                              part
+                            ),
+                          )}
                       </h2>
                       {question?.options ? (
-                        <div className="answer-grid">
+                        <div
+                          className={`answer-grid ${question.options.some((option) => option.length > 65) ? "answer-grid-prose" : ""}`}
+                        >
                           {question.options.map((option, i) => (
                             <button
                               key={option}
@@ -1108,6 +1125,9 @@ function App() {
               ))}
             </select>
           </label>
+          <p className="discipline-topics">
+            {BANK_STATS[config.discipline].topics.join(" · ")}
+          </p>
           <span className="field-label">Формат игры</span>
           <div className="segmented">
             {[

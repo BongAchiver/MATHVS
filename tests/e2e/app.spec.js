@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { QUESTION_BANKS } from "../../shared/questions/index.js";
 
 test("page switches only under the completed wipe, even on a throttled CPU", async ({
   page,
@@ -195,6 +196,74 @@ test("offline Blitz completes and has a full answer review", async ({
   await page.getByRole("button", { name: "На главную", exact: true }).click();
   await page.getByRole("button", { name: "Профиль", exact: true }).click();
   await expect(page.locator(".history-item")).toHaveCount(1);
+});
+
+test("long proof options fit a mobile viewport and offline history survives reload", async ({
+  page,
+}) => {
+  const template = QUESTION_BANKS.linear.find(
+    (q) =>
+      q.type === "choice" &&
+      q.kind === "Доказательство" &&
+      q.build().answer.length > 64,
+  );
+  const proof = template.build();
+  await page.addInitScript(
+    ({ history }) => {
+      if (!localStorage.getItem("mathvs-question-history-v1-linear"))
+        localStorage.setItem(
+          "mathvs-question-history-v1-linear",
+          JSON.stringify(history),
+        );
+    },
+    {
+      history: QUESTION_BANKS.linear
+        .filter((t) => t.id !== template.id)
+        .map((t) => ({ templateId: t.id, key: "already-seen" })),
+    },
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.locator(".mode-card.blitz").click();
+  await page.getByLabel("Дисциплина").selectOption("linear");
+  await page.getByRole("button", { name: "Начать тренировку" }).click();
+  await expect(page.locator(".question-text")).toHaveText(proof.prompt);
+  await expect(page.locator(".question-meta")).toContainText("Доказательство");
+  await expect(page.locator(".answer-grid-prose")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await page.screenshot({
+    path: "test-results/proof-mobile.png",
+    fullPage: true,
+  });
+  await expect(page.locator(".answer-option").first()).toBeEnabled({
+    timeout: 5000,
+  });
+  await page
+    .locator(".answer-option")
+    .filter({ hasText: proof.answer })
+    .click();
+  await expect(page.locator(".question-index")).toContainText("2 / 10");
+  for (let i = 1; i < 10; i++)
+    await page.locator(".answer-option").first().click();
+  await expect(page.locator(".result-panel")).toBeVisible();
+  const history = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("mathvs-question-history-v1-linear")),
+  );
+  const previous = new Set(history.slice(-10).map((q) => q.templateId));
+  await page.reload();
+  await page.locator(".mode-card.blitz").click();
+  await page.getByLabel("Дисциплина").selectOption("linear");
+  await page.getByRole("button", { name: "Начать тренировку" }).click();
+  const next = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("mathvs-question-history-v1-linear")).slice(
+      -10,
+    ),
+  );
+  for (const q of next) expect(previous.has(q.templateId)).toBeFalsy();
 });
 test("Grand Tour supports arbitrary order and locks accepted answers", async ({
   page,

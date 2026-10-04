@@ -26,6 +26,7 @@ export class Arena {
     this.timer.unref();
   }
   close() {
+    this.closed = true;
     clearInterval(this.timer);
     for (const timer of this.disconnects.values()) clearTimeout(timer);
   }
@@ -46,6 +47,7 @@ export class Arena {
       this.emit(userId, "queue:state", { status: "searching", ...q.config });
   }
   disconnect(userId) {
+    if (this.closed) return;
     this.cancel(userId);
     if (!this.active.has(userId)) return;
     const timer = setTimeout(() => {
@@ -127,7 +129,13 @@ export class Arena {
   }
   start(ids, config, ranked) {
     const startedAt = Date.now() + this.countdownMs;
-    const questions = makeQuestions(config, randomBytes(4).readUInt32LE());
+    const questions = makeQuestions(
+      config,
+      randomBytes(4).readUInt32LE(),
+      this.store.recentQuestions(ids, config.discipline),
+    );
+    // Record assignment, including abandoned matches, and retain it across restarts.
+    this.store.rememberQuestions(ids, config.discipline, questions);
     const m = {
       id: randomUUID(),
       config,
@@ -194,7 +202,7 @@ export class Arena {
     if (
       !payload ||
       typeof payload.answer !== "string" ||
-      payload.answer.length > 64 ||
+      payload.answer.length > 2048 ||
       !Number.isInteger(payload.index)
     )
       throw new Error("Некорректный ответ.");
@@ -217,6 +225,8 @@ export class Arena {
     )
       throw new Error("Ответ на этот вопрос уже принят.");
     const q = m.questions[index];
+    if (q.type === "numeric" && payload.answer.length > 64)
+      throw new Error("Некорректный ответ.");
     if (q.options && !q.options.includes(payload.answer))
       throw new Error("Выберите вариант ответа.");
     const correct = isCorrect(q, payload.answer);

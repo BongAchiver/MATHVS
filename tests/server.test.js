@@ -6,6 +6,7 @@ import { createStore } from "../server/store.js";
 import { mkdtempSync, unlinkSync, rmdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { QUESTION_BANKS } from "../shared/questions/index.js";
 const config = { mode: "long", discipline: "linear", duration: 30 };
 const once = (socket, name, predicate = () => true) =>
   new Promise((resolve, reject) => {
@@ -55,6 +56,76 @@ async function fixture(t) {
   }
   return { ...app, url, register };
 }
+test("online selection remembers both players, including forfeits; proof text over 64 characters is accepted", async (t) => {
+  const f = await fixture(t),
+    a = await f.register("theoryA"),
+    b = await f.register("theoryB"),
+    c = await f.register("theoryC");
+  const cfg = { mode: "blitz", discipline: "linear", duration: 10 };
+  const first = f.arena.start([a.user.id, b.user.id], cfg, false);
+  const seen = new Set(first.questions.map((q) => q.templateId));
+  f.arena.forfeit(a.user.id);
+  const second = f.arena.start([b.user.id, c.user.id], cfg, false);
+  for (const q of second.questions) {
+    assert.ok(!seen.has(q.templateId));
+    seen.add(q.templateId);
+  }
+  f.arena.forfeit(b.user.id);
+  const third = f.arena.start([a.user.id, c.user.id], cfg, false);
+  for (const q of third.questions) assert.ok(!seen.has(q.templateId));
+  const template = QUESTION_BANKS.linear.find(
+    (q) =>
+      q.type === "choice" &&
+      q.kind === "Доказательство" &&
+      q.build().answer.length > 64,
+  );
+  const proof = { ...template.build(), type: "choice", id: 0 };
+  assert.ok(proof.answer.length > 64);
+  third.questions[0] = proof;
+  const response = await send(a.socket, "match:answer", {
+    matchId: third.id,
+    index: 0,
+    answer: proof.answer,
+  });
+  assert.ok(response.accepted || response.ok, JSON.stringify(response));
+  assert.equal(third.players[0].score, 1);
+  f.arena.forfeit(c.user.id);
+});
+
+test("per-discipline question history persists across reopening and stays bounded", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "mathvs-bank-")),
+    file = join(dir, "bank.db");
+  let store = createStore(file);
+  try {
+    const a = await store.register("bankUser", "strong-password");
+    const qs = Array.from({ length: 240 }, (_, i) => ({
+      templateId: `t${i}`,
+      key: `question-${i}`,
+    }));
+    store.rememberQuestions([a.id], "linear", qs);
+    store.rememberQuestions([a.id], "calculus", qs.slice(0, 2));
+    store.db.close();
+    store = createStore(file);
+    const history = store.recentQuestions([a.id], "linear");
+    assert.equal(history.length, 180);
+    assert.deepEqual(
+      { ...history[0] },
+      { templateId: "t60", key: "question-60" },
+    );
+    assert.equal(store.recentQuestions([a.id], "calculus").length, 2);
+    assert.deepEqual(store.recentQuestions([a.id], "discrete"), []);
+  } finally {
+    store.db.close();
+    for (const suffix of ["", "-wal", "-shm"]) {
+      try {
+        unlinkSync(file + suffix);
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    }
+    rmdirSync(dir);
+  }
+});
 test("auth validates, blocks foreign origins, keeps passwords and sessions private", async (t) => {
   const f = await fixture(t);
   const request = (path, body, origin) =>
