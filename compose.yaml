@@ -1,0 +1,25 @@
+services:
+  mathvs:
+    build: .
+    image: ghcr.io/bongachiver/mathvs:latest
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${BIND_HOST:-0.0.0.0}:${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_PATH: /app/data/mathvs.db
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000,http://127.0.0.1:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    volumes:
+      - mathvs-data:/app/data
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  mathvs-data:

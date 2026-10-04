@@ -1,0 +1,350 @@
+.brand-button {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 3px 0;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.text-button:hover {
+  color: var(--lime);
+}
+.panel-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  margin: 0;
+}
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.align-right {
+  text-align: right !important;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.mode-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rating-big small {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-left: 12px;
+}
+.stat span {
+  display: block;
+}
+.full-width {
+  width: 100%;
+}
+.subpage {
+  padding: 48px 0;
+  min-height: calc(100vh - 170px);
+}
+.page-title {
+  font-size: clamp(30px, 4vw, 54px);
+  letter-spacing: -2px;
+  margin: 10px 0 20px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+.tier-strip {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 28px 0;
+}
+.tier-gold {
+  color: #e8d889 !important;
+}
+.tier-diamond {
+  color: #94ddf3 !important;
+}
+.tier-master {
+  color: #c8a4ff !important;
+}
+.profile-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.offline-banner,
+.resume-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: #15223a;
+  width: 100%;
+  margin: 16px 0;
+  padding: 13px 18px;
+  font-size: 12px;
+  color: var(--lime);
+}
+.offline-banner {
+  color: var(--muted);
+}
+.question-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: -8px 0 25px;
+}
+.question-tabs button {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  background: #0d1524;
+  color: var(--muted);
+  font-size: 11px;
+}
+.question-tabs button.active {
+  border-color: var(--lime);
+  color: var(--lime);
+}
+.question-tabs button.answered {
+  background: #4272ff30;
+}
+.opponent-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+.opponent-name small {
+  width: 100%;
+  color: var(--muted);
+  font-size: 10px;
+}
+.game-note {
+  margin-top: 28px;
+}
+.surrender {
+  margin-top: 8px;
+}
+.result-score > span {
+  font-size: 30px;
+  color: var(--muted);
+  letter-spacing: -1px;
+}
+.result-rating {
+  color: var(--lime);
+  font-size: 23px;
+  font-weight: 800;
+  margin: 20px 0;
+}
+.result-rating > span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.answer-review {
+  text-align: left;
+  margin-top: 30px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.answer-review summary {
+  font-size: 12px;
+  color: var(--lime);
+  cursor: pointer;
+}
+.review-item {
+  padding: 18px 14px;
+  margin-top: 12px;
+  background: #0b1424;
+  border-left: 2px solid var(--red);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.review-item.correct {
+  border-left-color: var(--lime);
+}
+.review-item p {
+  margin: 8px 0 0;
+}
+.room-code {
+  font: 900 42px monospace;
+  letter-spacing: 8px;
+  color: var(--lime);
+  text-align: center;
+  padding: 20px 0;
+}
+.center {
+  text-align: center;
+}
+.history-outcome.win {
+  color: var(--lime);
+}
+.history-outcome.loss {
+  color: var(--red);
+}
+.rules-content {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.rules-content h3 {
+  font-size: 15px;
+  margin: 22px 0 10px;
+}
+.modal form .button {
+  margin-top: 12px;
+}
+.result-panel .eyebrow {
+  justify-content: center;
+}
+.empty-state > svg {
+  color: var(--lime);
+}
+.footer .text-button {
+  font-size: 9px;
+}
+.leaderboard-table .player-cell small {
+  font-size: 9px;
+  color: var(--muted);
+}
+.profile-heading .button {
+  flex-shrink: 0;
+}
+.hero-accent {
+  font-size: 0.79em;
+  line-height: 1.18;
+}
+.modal-header h2 {
+  margin: 0;
+  max-width: 90%;
+  font-size: 23px;
+  letter-spacing: -0.7px;
+}
+.modal {
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.history-item strong {
+  font-size: 13px;
+}
+.empty-state p {
+  margin: 16px 0 0;
+}
+.game-header .eyebrow {
+  margin-bottom: 12px;
+}
+@media (max-width: 580px) {
+  .brand {
+    gap: 6px;
+    font-size: 18px;
+    letter-spacing: -1px;
+  }
+  .brand-mark {
+    width: 27px;
+    height: 29px;
+    font-size: 21px;
+  }
+  .topbar {
+    gap: 12px;
+  }
+  .nav-links {
+    gap: 10px;
+  }
+  .profile-heading {
+    flex-wrap: wrap;
+  }
+  .hero-title {
+    font-size: 54px;
+  }
+  .hero-accent {
+    font-size: 0.77em;
+  }
+  .tier-strip {
+    gap: 8px;
+  }
+  .history-item {
+    flex-wrap: wrap;
+  }
+  .opponent-panel .eyebrow {
+    font-size: 8px;
+  }
+  .game-note {
+    width: 100%;
+    margin-top: 8px;
+  }
+  .footer > span:last-child {
+    display: none;
+  }
+  .subpage {
+    padding-top: 32px;
+  }
+  .question-tabs {
+    gap: 5px;
+  }
+  .question-tabs button {
+    min-width: 29px;
+  }
+  .room-code {
+    font-size: 36px;
+    letter-spacing: 5px;
+  }
+  .result-panel h1 {
+    overflow-wrap: anywhere;
+  }
+  .modal-header h2 {
+    font-size: 21px;
+  }
+}
+.question-text {
+  animation: question-arrive 0.22s ease-out;
+}
+.result-score {
+  animation: result-arrive 0.4s ease-out;
+}
+@keyframes question-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes result-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .question-text,
+  .result-score {
+    animation: none;
+  }
+}
