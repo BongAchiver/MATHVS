@@ -33,6 +33,7 @@ import {
 } from "./practice.js";
 import { effect, setAudio } from "./audio.js";
 import Arena from "./Arena.jsx";
+import { useSceneNavigation } from "./useSceneNavigation.js";
 import "./styles.css";
 import "./extras.css";
 import "./persona.css";
@@ -261,13 +262,10 @@ function PersonalCard({ user, onAuth }) {
   );
 }
 function App() {
-  const [transition, setTransition] = useState(false);
-  const transitionTimer = useRef();
-  useEffect(() => () => clearTimeout(transitionTimer.current), []);
+  const { page, navigate, jumpTo, phase, advance } = useSceneNavigation();
   const [user, setUser] = useState(null),
     [players, setPlayers] = useState([]),
-    [history, setHistory] = useState([]),
-    [page, setPage] = useState("arena");
+    [history, setHistory] = useState([]);
   const [modal, setModal] = useState(null),
     [authAction, setAuthAction] = useState("register"),
     [error, setError] = useState(""),
@@ -358,7 +356,7 @@ function App() {
       if (gameId.current !== snapshot.id) {
         gameId.current = snapshot.id;
         setSelectedIndex(0);
-        setPage("game");
+        jumpTo("game");
         setModal(null);
         effect("start");
       }
@@ -372,7 +370,7 @@ function App() {
       s.disconnect();
       if (socket.current === s) socket.current = null;
     };
-  }, [user?.id, refresh]);
+  }, [user?.id, refresh, jumpTo]);
   const clockOffset = useRef(0);
   useEffect(() => {
     if (game?.serverNow && !game.offline)
@@ -380,25 +378,32 @@ function App() {
     else clockOffset.current = 0;
   }, [game]);
   useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(Date.now() + clockOffset.current);
+    if (!game || game.result) return;
+    const tick = () => {
+      if (page === "game" && !document.hidden)
+        setNow(Date.now() + clockOffset.current);
       const p = practice.current;
       if (p && expirePractice(p)) {
         setGame(practiceSnapshot(p));
         setAnswer("");
       }
-      if (p?.result && savedPractice.current !== p.id) {
-        savedPractice.current = p.id;
-        effect("finish");
-        setPractices((previous) => {
-          const next = [p.result, ...previous].slice(0, 30);
-          saveLocal("mathvs-practice", next);
-          return next;
-        });
-      }
-    }, 100);
+    };
+    tick();
+    const timer = setInterval(tick, 100);
     return () => clearInterval(timer);
-  }, []);
+  }, [game?.id, !!game?.result, page]);
+  useEffect(() => {
+    const p = practice.current;
+    if (p?.result && savedPractice.current !== p.id) {
+      savedPractice.current = p.id;
+      effect("finish");
+      setPractices((previous) => {
+        const next = [p.result, ...previous].slice(0, 30);
+        saveLocal("mathvs-practice", next);
+        return next;
+      });
+    }
+  }, [game?.id, !!game?.result]);
   useEffect(() => {
     const onOnline = () => refresh();
     window.addEventListener("online", onOnline);
@@ -444,7 +449,7 @@ function App() {
       setGame(practiceSnapshot(practice.current));
       setSelectedIndex(0);
       setAnswer("");
-      setPage("game");
+      jumpTo("game");
       setModal(null);
       effect("start");
       return;
@@ -514,15 +519,9 @@ function App() {
       setBusy(false);
     }
   }
-  const navigate = (destination) => {
-    if (destination === page) return;
-    effect("transition");
-    setTransition(true);
-    clearTimeout(transitionTimer.current);
-    transitionTimer.current = setTimeout(() => setTransition(false), 420);
-    setPage(destination);
+  useEffect(() => {
     setError("");
-  };
+  }, [page]);
   const activeGame = game && !game.result;
   const result = game?.result,
     myResult = result?.players.find(
@@ -552,8 +551,17 @@ function App() {
   return (
     <>
       <div className={`app-shell screen-${page}`} id="app-content">
-        {transition && (
-          <div className="transition-overlay" aria-hidden="true" />
+        {phase && (
+          <div
+            className="transition-overlay"
+            data-phase={phase}
+            aria-hidden="true"
+          >
+            <div
+              className={`transition-surface ${phase}`}
+              onAnimationEnd={advance}
+            />
+          </div>
         )}
         <header className="topbar">
           <button

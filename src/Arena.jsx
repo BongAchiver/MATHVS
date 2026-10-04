@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -52,7 +52,6 @@ export default function Arena({
   children,
 }) {
   const [selected, setSelected] = useState("blitz");
-  const stage = useRef();
   const mode = modes.find((m) => m.id === selected);
   function select(id) {
     if (id !== selected) {
@@ -75,30 +74,7 @@ export default function Arena({
   }
   return (
     <>
-      <section
-        className="arena-stage"
-        ref={stage}
-        onPointerMove={(e) => {
-          if (
-            e.pointerType !== "mouse" ||
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          )
-            return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          stage.current.style.setProperty(
-            "--pointer-x",
-            `${((e.clientX - rect.left) / rect.width - 0.5) * 14}px`,
-          );
-          stage.current.style.setProperty(
-            "--pointer-y",
-            `${((e.clientY - rect.top) / rect.height - 0.5) * 10}px`,
-          );
-        }}
-        onPointerLeave={() => {
-          stage.current.style.setProperty("--pointer-x", "0px");
-          stage.current.style.setProperty("--pointer-y", "0px");
-        }}
-      >
+      <section className="arena-stage">
         <div className="stage-word" aria-hidden="true">
           <span>MATH</span>
           <span>BATTLE</span>

@@ -1,4 +1,106 @@
 import { test, expect } from "@playwright/test";
+
+test("page switches only under the completed wipe, even on a throttled CPU", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/");
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  await page.evaluate(() => {
+    window.wipeAnimations = {};
+    window.wipeObserver = new MutationObserver(() => {
+      const surface = document.querySelector(".transition-surface");
+      if (!surface) return;
+      const animation = surface.getAnimations()[0];
+      if (
+        !animation ||
+        window.wipeAnimations[animation.animationName] === animation
+      )
+        return;
+      window.wipeAnimations[animation.animationName] = animation;
+      animation.pause();
+      animation.currentTime = animation.animationName === "wipe-cover" ? 70 : 0;
+    });
+    window.wipeObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  });
+  await page.getByRole("button", { name: "Рейтинг", exact: true }).click();
+  await expect(page.locator(".transition-overlay")).toHaveAttribute(
+    "data-phase",
+    "cover",
+  );
+  await expect(page.locator(".app-shell")).toHaveClass(/screen-arena/);
+  await expect(
+    page.getByRole("heading", { name: "СИЛЬНЕЙШИЕ УМЫ." }),
+  ).toHaveCount(0);
+  // Rapid requests during the cover coalesce to the most recent destination.
+  await page.getByRole("button", { name: "Профиль", exact: true }).click();
+  await page.evaluate(() => window.wipeAnimations["wipe-cover"].finish());
+  await expect(page.locator(".transition-overlay")).toHaveAttribute(
+    "data-phase",
+    "uncover",
+  );
+  await expect(page.locator(".app-shell")).toHaveClass(/screen-profile/);
+  const covered = await page.locator(".transition-surface").evaluate((e) => {
+    const r = e.getBoundingClientRect();
+    return (
+      r.left <= 0 &&
+      r.top <= 0 &&
+      r.right >= innerWidth &&
+      r.bottom >= innerHeight
+    );
+  });
+  expect(covered).toBeTruthy();
+  await page.evaluate(() => {
+    window.wipeObserver.disconnect();
+    window.wipeAnimations["wipe-uncover"].finish();
+  });
+  await expect(page.locator(".transition-overlay")).toHaveCount(0);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+});
+
+test("idle arena schedules no game timer and pointer movement does not mutate the portrait", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.fastIntervals = 0;
+    const original = window.setInterval;
+    window.setInterval = function (callback, delay, ...args) {
+      if (delay <= 250) window.fastIntervals++;
+      return original.call(this, callback, delay, ...args);
+    };
+  });
+  await page.goto("/");
+  await expect(page.locator(".arena-portrait img")).toBeVisible();
+  const before = await page
+    .locator(".arena-portrait img")
+    .evaluate((e) => getComputedStyle(e).transform);
+  await page.mouse.move(100, 170);
+  await page.mouse.move(800, 420);
+  await page.mouse.move(300, 240);
+  expect(
+    await page
+      .locator(".arena-portrait img")
+      .evaluate((e) => getComputedStyle(e).transform),
+  ).toBe(before);
+  expect(await page.locator(".arena-stage").getAttribute("style")).toBeNull();
+  expect(await page.evaluate(() => window.fastIntervals)).toBe(0);
+  expect(
+    await page
+      .locator(".arena-portrait img")
+      .evaluate((e) => getComputedStyle(e).filter),
+  ).toBe("none");
+  await page.locator(".mode-card.long").click();
+  await page.getByRole("button", { name: "Начать тренировку" }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.fastIntervals))
+    .toBeGreaterThan(0);
+});
 test("desktop and mobile arena are responsive with working navigation", async ({
   page,
 }) => {
