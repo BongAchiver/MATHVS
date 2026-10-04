@@ -38,7 +38,7 @@ await writeFile(
   "release/compose.yaml",
   template.replace("IMAGE_PLACEHOLDER", localImage),
 );
-await writeFile("release/.env.example", await readFile(".env.example"));
+await writeFile("release/env.example", await readFile(".env.example"));
 await writeFile(
   "release/RELEASE.md",
   `# MATHVS ${tag}
@@ -48,7 +48,7 @@ await writeFile(
 Коммит: \`${COMMIT_SHA}\`.
 Исходный образ: \`${source}\`.
 
-Скачайте **mathvs-image.tar.gz**, **compose.yaml** и **.env.example** в одну папку. При необходимости скопируйте .env.example в .env и настройте порт и домен.
+Скачайте **mathvs-image.tar.gz**, **compose.yaml** и **env.example** в одну папку. При необходимости скопируйте env.example в .env и настройте порт и домен.
 
 \`\`\`sh
 docker load --input mathvs-image.tar.gz
@@ -67,7 +67,7 @@ SHA256SUMS содержит контрольные суммы всех файл�
 const files = [
   "mathvs-image.tar.gz",
   "compose.yaml",
-  ".env.example",
+  "env.example",
   "RELEASE.md",
 ];
 const sums = [];

@@ -100,7 +100,7 @@ jobs:
         run: |
           RELEASE_TAG="build-${BUILD_NUMBER}-${COMMIT_SHA:0:7}"
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" release/mathvs-image.tar.gz release/compose.yaml release/.env.example release/RELEASE.md release/SHA256SUMS --clobber
+            gh release upload "$RELEASE_TAG" release/mathvs-image.tar.gz release/compose.yaml release/env.example release/RELEASE.md release/SHA256SUMS --clobber
           else
-            gh release create "$RELEASE_TAG" release/mathvs-image.tar.gz release/compose.yaml release/.env.example release/RELEASE.md release/SHA256SUMS --target "$COMMIT_SHA" --title "MATHVS ${RELEASE_TAG}" --notes-file release/RELEASE.md --latest
+            gh release create "$RELEASE_TAG" release/mathvs-image.tar.gz release/compose.yaml release/env.example release/RELEASE.md release/SHA256SUMS --target "$COMMIT_SHA" --title "MATHVS ${RELEASE_TAG}" --notes-file release/RELEASE.md --latest
           fi

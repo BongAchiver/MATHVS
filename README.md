@@ -78,7 +78,7 @@ Workflow [.github/workflows/ci.yml](.github/workflows/ci.yml):
 2. Затем Chromium E2E: мобильная вёрстка, все режимы, настоящий офлайн и матч двух браузерных аккаунтов.
 3. После успешных проверок push в `main` собирает и публикует Docker-образ в **`ghcr.io/bongachiver/mathvs:latest`**, также с тегом `sha-…`.
 4. Из точного digest этой сборки экспортирует полный Docker-образ, сжимает его и проверяет загрузку и запуск через Compose.
-5. Создаёт **GitHub Release** `build-<номер>-<коммит>` с `mathvs-image.tar.gz`, `compose.yaml`, `.env.example`, `RELEASE.md` и `SHA256SUMS`. Новый успешный push в `main` — новый Release. Повторный запуск того же workflow обновляет его файлы.
+5. Создаёт **GitHub Release** `build-<номер>-<коммит>` с `mathvs-image.tar.gz`, `compose.yaml`, `env.example`, `RELEASE.md` и `SHA256SUMS`. Новый успешный push в `main` — новый Release. Повторный запуск того же workflow обновляет его файлы. Файл окружения в Release называется `env.example`: для изменения настроек скопируй его в `.env`.
 
 Используется встроенный `GITHUB_TOKEN`: `packages: write` для образа и `contents: write` для Release; дополнительных секретов не нужно. В репозитории должны быть включены GitHub Actions и разрешены используемые actions. Если GHCR-пакет приватный, для скачивания из реестра нужен `docker login ghcr.io` с токеном `read:packages`. Архив из публичного Release скачивается без входа в GHCR.
 
