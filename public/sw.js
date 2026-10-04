@@ -1,4 +1,4 @@
-const CACHE = "mathvs-v2";
+const CACHE = "mathvs-v3";
 self.addEventListener("install", (event) =>
   event.waitUntil(
     (async () => {
@@ -13,6 +13,7 @@ self.addEventListener("install", (event) =>
         "/favicon.svg",
         "/art/arena-portrait.png",
         "/fonts/oswald.ttf",
+        "/audio/ui-press-v2.wav",
         ...assets,
       ]);
       await self.skipWaiting();

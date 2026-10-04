@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { QUESTION_BANKS } from "../../shared/questions/index.js";
 
-test("button foley is gesture-only, does not repeat, and mute survives reload", async ({
+test("stereo button sound is gesture-only, does not repeat, and mute survives reload", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -9,6 +9,10 @@ test("button foley is gesture-only, does not repeat, and mute survives reload", 
     const start = AudioBufferSourceNode.prototype.start;
     AudioBufferSourceNode.prototype.start = function (...args) {
       window.audioStarts++;
+      window.lastSound = {
+        channels: this.buffer.numberOfChannels,
+        duration: this.buffer.duration,
+      };
       return start.apply(this, args);
     };
   });
@@ -18,6 +22,10 @@ test("button foley is gesture-only, does not repeat, and mute survives reload", 
   expect(await page.evaluate(() => window.audioStarts)).toBe(0);
   await page.locator(".mode-card.long").click();
   await expect.poll(() => page.evaluate(() => window.audioStarts)).toBe(1);
+  expect(await page.evaluate(() => window.lastSound)).toEqual({
+    channels: 2,
+    duration: 0.19,
+  });
   // Observe longer than the former soundtrack's beat interval.
   await page.waitForTimeout(700);
   expect(await page.evaluate(() => window.audioStarts)).toBe(1);

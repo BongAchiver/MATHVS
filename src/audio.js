@@ -1,5 +1,6 @@
-// Short, original foley taps. No music, melodic cues, oscillators or audio timers.
-let context, master, buffers;
+// Original rendered stereo UI sound: no noise synthesis or soundtrack.
+const SOUND_URL = "/audio/ui-press-v2.wav";
+let context, master, bufferPromise;
 let enabled = true;
 let lastTap = -Infinity;
 function init() {
@@ -8,31 +9,20 @@ function init() {
   context ||= new AudioContext();
   if (!master) {
     master = context.createGain();
-    master.gain.value = 0.35;
+    master.gain.value = enabled ? 0.55 : 0;
     master.connect(context.destination);
-    buffers = Array.from({ length: 4 }, (_, variant) => {
-      const buffer = context.createBuffer(
-        1,
-        Math.ceil(context.sampleRate * 0.075),
-        context.sampleRate,
-      );
-      const samples = buffer.getChannelData(0);
-      let warm = 0,
-        previous = 0;
-      for (let i = 0; i < samples.length; i++) {
-        const t = i / context.sampleRate;
-        warm += 0.18 * (Math.random() * 2 - 1 - warm);
-        const texture = warm - previous * 0.55;
-        previous = warm;
-        const attack = Math.min(1, t / 0.0015);
-        const impact =
-          Math.sin(2 * Math.PI * (165 + variant * 12) * t) *
-          Math.exp(-t / 0.009);
-        samples[i] =
-          attack * (texture * Math.exp(-t / 0.012) * 0.8 + impact * 0.16);
-      }
-      return buffer;
-    });
+  }
+  if (!bufferPromise) {
+    bufferPromise = fetch(SOUND_URL)
+      .then((response) => {
+        if (!response.ok) throw new Error("UI sound unavailable");
+        return response.arrayBuffer();
+      })
+      .then((bytes) => context.decodeAudioData(bytes))
+      .catch(() => {
+        bufferPromise = undefined;
+        return null;
+      });
   }
   return true;
 }
@@ -40,23 +30,43 @@ export function clickSound() {
   if (!enabled || document.hidden) return;
   try {
     if (!init()) return;
+    // Resume synchronously in the gesture, including on mobile Safari.
     if (context.state === "suspended") context.resume().catch(() => {});
-    if (context.currentTime - lastTap < 0.025) return;
-    lastTap = context.currentTime;
-    const source = context.createBufferSource();
-    source.buffer = buffers[Math.floor(Math.random() * buffers.length)];
-    source.connect(master);
-    source.onended = () => source.disconnect();
-    source.start();
+    const clickedAt = performance.now();
+    if (clickedAt - lastTap < 25) return;
+    lastTap = clickedAt;
+    bufferPromise
+      .then((buffer) => {
+        // Never replay stale clicks after a slow download or muting.
+        if (
+          !buffer ||
+          !enabled ||
+          document.hidden ||
+          performance.now() - clickedAt > 250
+        )
+          return;
+        const source = context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(master);
+        source.onended = () => source.disconnect();
+        source.start();
+      })
+      .catch(() => {});
   } catch {
-    /* Audio is optional, including on devices without Web Audio support. */
+    /* Audio is optional on unsupported devices. */
   }
 }
 export function setAudio(on) {
   enabled = on;
-  if (master) master.gain.value = on ? 0.35 : 0;
+  if (master) master.gain.value = on ? 0.55 : 0;
 }
 export function installButtonSounds() {
+  // Decode ahead of the first click; remain silent until a gesture.
+  try {
+    init();
+  } catch {
+    /* Audio is optional. */
+  }
   const onClick = (event) => {
     const button =
       event.target instanceof Element ? event.target.closest("button") : null;
