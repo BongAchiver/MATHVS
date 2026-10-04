@@ -7,7 +7,6 @@ import {
   Trophy,
   Zap,
 } from "lucide-react";
-import { effect } from "./audio.js";
 const modes = [
   {
     id: "blitz",
@@ -56,7 +55,6 @@ export default function Arena({
   function select(id) {
     if (id !== selected) {
       setSelected(id);
-      effect("select");
     }
   }
   function keyboard(e) {

@@ -1,83 +1,72 @@
-// Original procedural soundtrack. No external audio files or third-party samples.
-let context,
-  master,
-  interval,
-  step = 0;
-let enabled = false;
+// Short, original foley taps. No music, melodic cues, oscillators or audio timers.
+let context, master, buffers;
+let enabled = true;
+let lastTap = -Infinity;
 function init() {
-  context ||= new (window.AudioContext || window.webkitAudioContext)();
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return false;
+  context ||= new AudioContext();
   if (!master) {
     master = context.createGain();
-    master.gain.value = 0.22;
+    master.gain.value = 0.35;
     master.connect(context.destination);
+    buffers = Array.from({ length: 4 }, (_, variant) => {
+      const buffer = context.createBuffer(
+        1,
+        Math.ceil(context.sampleRate * 0.075),
+        context.sampleRate,
+      );
+      const samples = buffer.getChannelData(0);
+      let warm = 0,
+        previous = 0;
+      for (let i = 0; i < samples.length; i++) {
+        const t = i / context.sampleRate;
+        warm += 0.18 * (Math.random() * 2 - 1 - warm);
+        const texture = warm - previous * 0.55;
+        previous = warm;
+        const attack = Math.min(1, t / 0.0015);
+        const impact =
+          Math.sin(2 * Math.PI * (165 + variant * 12) * t) *
+          Math.exp(-t / 0.009);
+        samples[i] =
+          attack * (texture * Math.exp(-t / 0.012) * 0.8 + impact * 0.16);
+      }
+      return buffer;
+    });
   }
-  if (context.state === "suspended") context.resume();
+  return true;
 }
-function tone(frequency, duration, type = "sine", volume = 0.2, delay = 0) {
-  if (!enabled || !context || context.state !== "running") return;
-  const osc = context.createOscillator(),
-    gain = context.createGain(),
-    at = context.currentTime + delay;
-  osc.type = type;
-  osc.frequency.setValueAtTime(frequency, at);
-  gain.gain.setValueAtTime(0, at);
-  gain.gain.linearRampToValueAtTime(volume, at + 0.008);
-  gain.gain.exponentialRampToValueAtTime(0.001, at + duration);
-  osc.connect(gain);
-  gain.connect(master);
-  osc.start(at);
-  osc.stop(at + duration + 0.02);
-  osc.onended = () => {
-    osc.disconnect();
-    gain.disconnect();
-  };
-}
-export function effect(name) {
-  if (name === "select") {
-    tone(740, 0.045, "triangle", 0.15);
-    tone(1110, 0.05, "sine", 0.06, 0.025);
+export function clickSound() {
+  if (!enabled || document.hidden) return;
+  try {
+    if (!init()) return;
+    if (context.state === "suspended") context.resume().catch(() => {});
+    if (context.currentTime - lastTap < 0.025) return;
+    lastTap = context.currentTime;
+    const source = context.createBufferSource();
+    source.buffer = buffers[Math.floor(Math.random() * buffers.length)];
+    source.connect(master);
+    source.onended = () => source.disconnect();
+    source.start();
+  } catch {
+    /* Audio is optional, including on devices without Web Audio support. */
   }
-  if (name === "transition") {
-    tone(220, 0.12, "triangle", 0.16);
-    tone(440, 0.09, "triangle", 0.12, 0.045);
-    tone(880, 0.1, "sine", 0.08, 0.09);
-  }
-  if (name === "click") tone(640, 0.045, "triangle", 0.22);
-  if (name === "answer") {
-    tone(520, 0.1, "sine", 0.3);
-    tone(780, 0.15, "sine", 0.2, 0.08);
-  }
-  if (name === "start")
-    [330, 440, 660].forEach((f, i) => tone(f, 0.25, "triangle", 0.4, i * 0.12));
-  if (name === "finish")
-    [261.63, 329.63, 392, 523.25].forEach((f, i) =>
-      tone(f, 0.6, "triangle", 0.25, i * 0.11),
-    );
-  if (name === "tick") tone(980, 0.05, "sine", 0.1);
-}
-function beat() {
-  if (document.hidden) return;
-  const bass = [130.81, 130.81, 155.56, 116.54][Math.floor(step / 16) % 4];
-  if (step % 4 === 0) {
-    tone(55, 0.15, "sine", 0.5);
-    tone(bass, 0.28, "triangle", 0.2);
-  }
-  if (step % 4 === 2) tone(180, 0.05, "triangle", 0.13);
-  if (step % 2 === 0) tone(4000, 0.02, "sine", 0.03);
-  const melody = [
-    523.25, 0, 622.25, 0, 783.99, 698.46, 0, 622.25, 523.25, 0, 466.16, 0, 392,
-    466.16, 0, 0,
-  ];
-  if (melody[step % 16]) tone(melody[step % 16], 0.2, "sine", 0.09);
-  step++;
 }
 export function setAudio(on) {
   enabled = on;
-  clearInterval(interval);
-  interval = undefined;
-  if (on) {
-    init();
-    effect("click");
-    interval = setInterval(beat, 60000 / 112 / 4);
-  } else if (context) context.suspend();
+  if (master) master.gain.value = on ? 0.35 : 0;
+}
+export function installButtonSounds() {
+  const onClick = (event) => {
+    const button =
+      event.target instanceof Element ? event.target.closest("button") : null;
+    if (
+      button &&
+      !button.disabled &&
+      button.getAttribute("aria-disabled") !== "true"
+    )
+      clickSound();
+  };
+  document.addEventListener("click", onClick, true);
+  return () => document.removeEventListener("click", onClick, true);
 }

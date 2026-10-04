@@ -1,0 +1,10 @@
+[Unit]
+Description=Update MATHVS from the latest published GitHub Release
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/mathvs/update.sh
+TimeoutStartSec=20min

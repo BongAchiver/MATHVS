@@ -31,7 +31,7 @@ import {
   answerPractice,
   expirePractice,
 } from "./practice.js";
-import { effect, setAudio } from "./audio.js";
+import { installButtonSounds, setAudio } from "./audio.js";
 import Arena from "./Arena.jsx";
 import { BANK_STATS } from "../shared/questions/index.js";
 import { useSceneNavigation } from "./useSceneNavigation.js";
@@ -283,7 +283,7 @@ function App() {
     [answer, setAnswer] = useState(""),
     [selectedIndex, setSelectedIndex] = useState(0),
     [now, setNow] = useState(Date.now());
-  const [sound, setSound] = useState(false),
+  const [sound, setSound] = useState(() => readLocal("mathvs-ui-sound", true)),
     [connected, setConnected] = useState(false),
     [stats, setStats] = useState({ online: 0 }),
     [apiOffline, setApiOffline] = useState(false);
@@ -291,6 +291,11 @@ function App() {
     const p = readLocal("mathvs-practice", []);
     return Array.isArray(p) ? p : [];
   });
+  useEffect(installButtonSounds, []);
+  useEffect(() => {
+    setAudio(sound);
+    saveLocal("mathvs-ui-sound", sound);
+  }, [sound]);
   const socket = useRef(null),
     practice = useRef(null),
     savedPractice = useRef(null),
@@ -359,11 +364,10 @@ function App() {
         setSelectedIndex(0);
         jumpTo("game");
         setModal(null);
-        effect("start");
       }
       if (snapshot.result && finishedId.current !== snapshot.id) {
         finishedId.current = snapshot.id;
-        effect("finish");
+
         refresh();
       }
     });
@@ -397,7 +401,7 @@ function App() {
     const p = practice.current;
     if (p?.result && savedPractice.current !== p.id) {
       savedPractice.current = p.id;
-      effect("finish");
+
       setPractices((previous) => {
         const next = [p.result, ...previous].slice(0, 30);
         saveLocal("mathvs-practice", next);
@@ -426,7 +430,6 @@ function App() {
     );
   }
   function openMode(mode) {
-    effect("click");
     setConfig((c) => ({ ...c, mode }));
     setNetwork("offline");
     setError("");
@@ -452,7 +455,7 @@ function App() {
       setAnswer("");
       jumpTo("game");
       setModal(null);
-      effect("start");
+
       return;
     }
     if (!user) {
@@ -513,7 +516,6 @@ function App() {
       } else
         await send("match:answer", { matchId: game.id, index, answer: value });
       setAnswer("");
-      effect("answer");
     } catch (e) {
       setError(e.message);
     } finally {
@@ -595,7 +597,7 @@ function App() {
             <button
               className="sound-toggle"
               aria-label={
-                sound ? "Выключить музыку и звук" : "Включить музыку и звук"
+                sound ? "Выключить звуки кнопок" : "Включить звуки кнопок"
               }
               aria-pressed={sound}
               title={sound ? "Звук включён" : "Включить звук"}

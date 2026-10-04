@@ -1,6 +1,36 @@
 import { test, expect } from "@playwright/test";
 import { QUESTION_BANKS } from "../../shared/questions/index.js";
 
+test("button foley is gesture-only, does not repeat, and mute survives reload", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.audioStarts = 0;
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function (...args) {
+      window.audioStarts++;
+      return start.apply(this, args);
+    };
+  });
+  await page.goto("/");
+  expect(await page.evaluate(() => window.audioStarts)).toBe(0);
+  await page.locator(".mode-card.long").hover();
+  expect(await page.evaluate(() => window.audioStarts)).toBe(0);
+  await page.locator(".mode-card.long").click();
+  await expect.poll(() => page.evaluate(() => window.audioStarts)).toBe(1);
+  // Observe longer than the former soundtrack's beat interval.
+  await page.waitForTimeout(700);
+  expect(await page.evaluate(() => window.audioStarts)).toBe(1);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Выключить звуки кнопок" }).click();
+  await expect(
+    page.getByRole("button", { name: "Включить звуки кнопок" }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await page.reload();
+  await page.locator(".mode-card.blitz").click();
+  expect(await page.evaluate(() => window.audioStarts)).toBe(0);
+});
+
 test("page switches only under the completed wipe, even on a throttled CPU", async ({
   page,
   context,

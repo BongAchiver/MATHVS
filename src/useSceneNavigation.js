@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { effect } from "./audio.js";
 
 // The cover holds at its final frame until React commits the new page.
 // Animation events, rather than wall-clock timers, also work under CPU load.
@@ -38,7 +37,6 @@ export function useSceneNavigation(initialPage = "arena") {
         return;
       }
       if (!phaseRef.current) {
-        effect("transition");
         changePhase("cover");
       }
     },
