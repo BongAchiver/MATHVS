@@ -4,13 +4,10 @@ import { io } from "socket.io-client";
 import {
   ArrowUpRight,
   ArrowRight,
-  Zap,
-  Orbit,
   Trophy,
   Volume2,
   VolumeX,
   X,
-  ChevronRight,
   Radio,
   Swords,
   Check,
@@ -35,12 +32,10 @@ import {
   expirePractice,
 } from "./practice.js";
 import { effect, setAudio } from "./audio.js";
+import Arena from "./Arena.jsx";
 import "./styles.css";
 import "./extras.css";
-const Icon = ({ name, ...props }) => {
-  const C = { blitz: Zap, long: Orbit, grand: Trophy }[name];
-  return <C {...props} />;
-};
+import "./persona.css";
 const readLocal = (key, fallback) => {
   try {
     return JSON.parse(localStorage.getItem(key)) ?? fallback;
@@ -266,6 +261,9 @@ function PersonalCard({ user, onAuth }) {
   );
 }
 function App() {
+  const [transition, setTransition] = useState(false);
+  const transitionTimer = useRef();
+  useEffect(() => () => clearTimeout(transitionTimer.current), []);
   const [user, setUser] = useState(null),
     [players, setPlayers] = useState([]),
     [history, setHistory] = useState([]),
@@ -517,7 +515,11 @@ function App() {
     }
   }
   const navigate = (destination) => {
-    effect("click");
+    if (destination === page) return;
+    effect("transition");
+    setTransition(true);
+    clearTimeout(transitionTimer.current);
+    transitionTimer.current = setTimeout(() => setTransition(false), 420);
     setPage(destination);
     setError("");
   };
@@ -549,7 +551,10 @@ function App() {
   };
   return (
     <>
-      <div className="app-shell" id="app-content">
+      <div className={`app-shell screen-${page}`} id="app-content">
+        {transition && (
+          <div className="transition-overlay" aria-hidden="true" />
+        )}
         <header className="topbar">
           <button
             className="brand brand-button"
@@ -603,7 +608,7 @@ function App() {
             </button>
           </div>
         </header>
-        <main className="page">
+        <main className="page page-view" key={page}>
           {apiOffline && (
             <div className="offline-banner">
               <WifiOff size={14} /> Сервер недоступен. Офлайн-тренировка
@@ -617,107 +622,13 @@ function App() {
             </button>
           )}
           {page === "arena" && (
-            <>
-              <section className="hero">
-                <div className="hero-copy">
-                  <div className="eyebrow">Математика. Азарт. Твой ход.</div>
-                  <h1 className="hero-title">
-                    ДУМАЙ
-                    <br />
-                    БЫСТРЕЕ.
-                    <br />
-                    <span className="hero-accent">ИГРАЙ ВЫШЕ.</span>
-                  </h1>
-                  <p className="hero-description">
-                    Твоя голова — главное оружие. Брось вызов сопернику в
-                    матанализе, линале и дискретной математике. От первого
-                    решения до высшей лиги.
-                  </p>
-                  <div className="hero-actions">
-                    <button
-                      className="button primary"
-                      disabled={!!activeGame}
-                      onClick={() => openMode("blitz")}
-                    >
-                      На арену <ArrowUpRight size={17} />
-                    </button>
-                    <button
-                      className="button secondary"
-                      onClick={() => setModal("rules")}
-                    >
-                      <BookOpen size={15} /> Как играть
-                    </button>
-                  </div>
-                </div>
-                <div className="hero-art" aria-hidden="true">
-                  <div className="orbit orbit-one" />
-                  <div className="orbit orbit-two" />
-                  <div className="art-core">∑</div>
-                  <span className="math-symbol symbol-one">∫ dx</span>
-                  <span className="math-symbol symbol-two">λ</span>
-                  <span className="math-symbol symbol-three">∀ x ∈ ℝ</span>
-                  <span className="art-caption">
-                    PRECISION × SPEED = VICTORY
-                  </span>
-                </div>
-              </section>
-              <section>
-                <div className="section-heading">
-                  <h2>Выбери свой темп</h2>
-                  <span>03 РЕЖИМА / 01 ЦЕЛЬ</span>
-                </div>
-                <div className="mode-grid">
-                  {[
-                    [
-                      "blitz",
-                      "01",
-                      "РЕАКЦИЯ",
-                      "10 вопросов. 10 секунд на каждый. Доверяй знаниям — и своему первому импульсу.",
-                      "10 сек / вопрос",
-                      "Тест",
-                    ],
-                    [
-                      "long",
-                      "02",
-                      "КОНЦЕНТРАЦИЯ",
-                      "Две задачи, чистое решение. Никаких подсказок: только ты, время и правильный ответ.",
-                      "30 / 60 сек",
-                      "2 задачи",
-                    ],
-                    [
-                      "grand",
-                      "03",
-                      "ВЫНОСЛИВОСТЬ",
-                      "Тест и три задачи в одном забеге. Пять минут, чтобы показать всё, на что ты способен.",
-                      "5 минут",
-                      "8 + 3",
-                    ],
-                  ].map(([id, n, tag, description, time, count]) => (
-                    <button
-                      key={id}
-                      className={`mode-card ${id}`}
-                      disabled={!!activeGame || queue.status !== "idle"}
-                      onClick={() => openMode(id)}
-                    >
-                      <span className="mode-number">{n}</span>
-                      <span className="mode-icon">
-                        <Icon name={id} size={22} />
-                      </span>
-                      <span className="mode-tag">{tag}</span>
-                      <h3 className="mode-title">{MODES[id].name}</h3>
-                      <p className="mode-description">{description}</p>
-                      <div className="mode-meta">
-                        <span>
-                          <Clock3 size={11} /> {time}
-                        </span>
-                        <span>{count}</span>
-                        <span>ONLINE / SOLO</span>
-                      </div>
-                      <ArrowUpRight className="card-arrow" size={19} />
-                    </button>
-                  ))}
-                </div>
-              </section>
+            <Arena
+              disabled={!!activeGame || queue.status !== "idle"}
+              user={user}
+              stats={stats}
+              onMode={openMode}
+              onRules={() => setModal("rules")}
+            >
               <div className="dashboard-bottom">
                 <Leaderboard
                   players={players}
@@ -725,7 +636,7 @@ function App() {
                 />
                 <PersonalCard user={user} onAuth={() => setModal("auth")} />
               </div>
-            </>
+            </Arena>
           )}
           {page === "rating" && (
             <section className="subpage">
@@ -992,7 +903,14 @@ function App() {
             </section>
           )}
           {page === "game" && result && myResult && (
-            <section className="result-panel">
+            <section className={`result-panel outcome-${myResult.outcome}`}>
+              <div className="result-kicker" aria-hidden="true">
+                RESULT / {myResult.outcome === "win" ? "VICTORY" : "NEXT LEVEL"}
+              </div>
+              <div className="result-slash" aria-hidden="true" />
+              <div className="result-art" aria-hidden="true">
+                <img src="/art/arena-portrait.png" alt="" />
+              </div>
               <div className="eyebrow">
                 {game.offline
                   ? "ТРЕНИРОВКА"

@@ -1,4 +1,4 @@
-const CACHE = "mathvs-v1";
+const CACHE = "mathvs-v2";
 self.addEventListener("install", (event) =>
   event.waitUntil(
     (async () => {
@@ -8,7 +8,13 @@ self.addEventListener("install", (event) =>
       const assets = [
         ...html.matchAll(/(?:src|href)="(\/assets\/[^" ]+)"/g),
       ].map((m) => m[1]);
-      await cache.addAll(["/", "/favicon.svg", ...assets]);
+      await cache.addAll([
+        "/",
+        "/favicon.svg",
+        "/art/arena-portrait.png",
+        "/fonts/oswald.ttf",
+        ...assets,
+      ]);
       await self.skipWaiting();
     })(),
   ),

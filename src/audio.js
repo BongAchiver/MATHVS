@@ -33,6 +33,15 @@ function tone(frequency, duration, type = "sine", volume = 0.2, delay = 0) {
   };
 }
 export function effect(name) {
+  if (name === "select") {
+    tone(740, 0.045, "triangle", 0.15);
+    tone(1110, 0.05, "sine", 0.06, 0.025);
+  }
+  if (name === "transition") {
+    tone(220, 0.12, "triangle", 0.16);
+    tone(440, 0.09, "triangle", 0.12, 0.045);
+    tone(880, 0.1, "sine", 0.08, 0.09);
+  }
   if (name === "click") tone(640, 0.045, "triangle", 0.22);
   if (name === "answer") {
     tone(520, 0.1, "sine", 0.3);

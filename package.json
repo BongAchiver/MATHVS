@@ -13,8 +13,8 @@
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "check": "npm run format:check && npm run test && npm run build",
-    "format": "prettier --write src server shared tests public/sw.js *.js *.json *.html *.yaml .github/workflows/*.yml README.md",
-    "format:check": "prettier --check src server shared tests public/sw.js *.js *.json *.html *.yaml .github/workflows/*.yml README.md"
+    "format": "prettier --write src server shared tests public/sw.js *.js *.json *.html *.yaml .github/workflows/*.yml .github/scripts/*.mjs deploy/*.yaml README.md",
+    "format:check": "prettier --check src server shared tests public/sw.js *.js *.json *.html *.yaml .github/workflows/*.yml .github/scripts/*.mjs deploy/*.yaml README.md"
   },
   "dependencies": {
     "express": "^5.1.0",

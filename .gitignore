@@ -7,3 +7,5 @@ playwright-report/
 *.log
 *.db*
 .tmp/
+release/
+artifacts/

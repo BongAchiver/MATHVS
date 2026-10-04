@@ -1,6 +1,6 @@
 # MATHVS
 
-Соревновательная математическая арена: матанализ, линейная алгебра и дискретная математика. React + Node.js + Socket.IO + SQLite. Интерфейс на русском, оригинальная угловая графика, адаптивная вёрстка, анимации и процедурная музыка через Web Audio.
+Соревновательная математическая арена: матанализ, линейная алгебра и дискретная математика. React + Node.js + Socket.IO + SQLite. Интерфейс на русском в духе игровых меню Persona: диагональные слои, крупная типографика, оригинальный anime-портрет, переходы сцен и процедурная музыка через Web Audio.
 
 ![Арена MATHVS](docs/arena.png)
 
@@ -77,8 +77,21 @@ Workflow [.github/workflows/ci.yml](.github/workflows/ci.yml):
 1. На pull request и push в `main`: чистая установка зависимостей, серверные/математические тесты и production-сборка.
 2. Затем Chromium E2E: мобильная вёрстка, все режимы, настоящий офлайн и матч двух браузерных аккаунтов.
 3. После успешных проверок push в `main` собирает и публикует Docker-образ в **`ghcr.io/bongachiver/mathvs:latest`**, также с тегом `sha-…`.
+4. Из точного digest этой сборки экспортирует полный Docker-образ, сжимает его и проверяет загрузку и запуск через Compose.
+5. Создаёт **GitHub Release** `build-<номер>-<коммит>` с `mathvs-image.tar.gz`, `compose.yaml`, `.env.example`, `RELEASE.md` и `SHA256SUMS`. Новый успешный push в `main` — новый Release. Повторный запуск того же workflow обновляет его файлы.
 
-Используется встроенный `GITHUB_TOKEN` с правом `packages: write`; дополнительных секретов для сборки не нужно. В репозитории должны быть включены GitHub Actions и разрешены используемые actions. Если GHCR-пакет приватный, для скачивания нужен `docker login ghcr.io` с токеном `read:packages`; для публичного доступа измени видимость пакета на Public в GitHub.
+Используется встроенный `GITHUB_TOKEN`: `packages: write` для образа и `contents: write` для Release; дополнительных секретов не нужно. В репозитории должны быть включены GitHub Actions и разрешены используемые actions. Если GHCR-пакет приватный, для скачивания из реестра нужен `docker login ghcr.io` с токеном `read:packages`. Архив из публичного Release скачивается без входа в GHCR.
+
+### Готовый контейнер из Release
+
+Скачай архив образа и остальные файлы из [последнего Release](https://github.com/BongAchiver/MATHVS/releases/latest) в одну папку:
+
+```sh
+docker load --input mathvs-image.tar.gz
+docker compose up -d
+```
+
+Сборка и установка Node.js не нужны. В Release находится Compose без `build`, с фиксированным тегом локального образа и `pull_policy: never`. Проект всегда называется `mathvs`, поэтому обновления сохраняют тот же том базы. Образ — Linux amd64; на Windows используется Docker Desktop с Linux containers. Полные инструкции и контрольные суммы приложены к Release.
 
 Обновление на сервере из опубликованного образа:
 
@@ -106,12 +119,16 @@ E2E запускает production-сервер, если :3000 свободен;
 
 ```text
 src/              React, стили, звук, локальный движок тренировки
+public/art/       оригинальная иллюстрация и промпт imagegen
+public/fonts/     локальный Oswald, лицензия OFL
 shared/game.js    задачи, проверка чисел, правила рейтинга и результата
 server/index.js   HTTP API, сессии, защита запросов, Socket.IO
 server/arena.js   очередь, комнаты, авторитетный движок матчей
 server/store.js   SQLite, аккаунты, рейтинги, история
 tests/            математические, серверные и браузерные проверки
 public/sw.js      офлайн-кэш production-интерфейса
+.github/scripts/  экспорт Docker-образа и упаковка Release
+deploy/           шаблон Compose для готового Release
 ```
 
 Пароли хэшируются scrypt с отдельной солью; сессии — случайные токены в HttpOnly/SameSite cookie, в базе хранится SHA-256 токена. Есть ограничения HTTP/Socket.IO запросов, проверка Origin, ограничение размера payload и security headers. В открытых профилях нет паролей или токенов.

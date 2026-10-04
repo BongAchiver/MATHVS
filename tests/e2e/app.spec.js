@@ -7,6 +7,15 @@ test("desktop and mobile arena are responsive with working navigation", async ({
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /ДУМАЙ/ })).toBeVisible();
   await expect(page.locator(".mode-card")).toHaveCount(3);
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator(".arena-portrait img").evaluate((image) => image.decode());
+  await page
+    .locator(".page-view")
+    .evaluate((element) =>
+      Promise.all(
+        element.getAnimations().map((animation) => animation.finished),
+      ),
+    );
   await page.screenshot({
     path: "test-results/arena-desktop.png",
     fullPage: true,
@@ -16,6 +25,7 @@ test("desktop and mobile arena are responsive with working navigation", async ({
     page.getByRole("heading", { name: "СИЛЬНЕЙШИЕ УМЫ." }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Арена", exact: true }).click();
+  await expect(page.locator(".transition-overlay")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -31,6 +41,30 @@ test("desktop and mobile arena are responsive with working navigation", async ({
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("game menu responds to keyboard focus and respects reduced motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.locator(".mode-card.blitz").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.locator(".mode-card.long")).toBeFocused();
+  await expect(page.locator(".brief-name")).toHaveText("Long Call");
+  await expect(page.locator(".mode-card.long")).toHaveClass(/selected/);
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog")).toContainText("Long Call / Настройка");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Рейтинг", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "СИЛЬНЕЙШИЕ УМЫ." }),
+  ).toBeVisible();
+  expect(
+    await page
+      .locator(".page-view")
+      .evaluate((e) => getComputedStyle(e).animationName),
+  ).toBe("none");
 });
 test("offline Blitz completes and has a full answer review", async ({
   page,
