@@ -60,6 +60,14 @@ const saveLocal = (key, value) => {
     /* Private browsing may disable storage. */
   }
 };
+const invitationCode = () =>
+  new URLSearchParams(window.location.search).get("room");
+const clearInvitationUrl = () => {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("room")) return;
+  url.searchParams.delete("room");
+  window.history.replaceState(window.history.state, "", url);
+};
 const secondsText = (ms) => {
   const s = Math.ceil(Math.max(0, ms) / 1000);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -280,7 +288,13 @@ function App() {
   const [user, setUser] = useState(null),
     [players, setPlayers] = useState([]),
     [history, setHistory] = useState([]);
-  const [modal, setModal] = useState(null),
+  const [inviteCode] = useState(
+    () => invitationCode()?.trim().toUpperCase() || "",
+  );
+  const [shareStatus, setShareStatus] = useState("");
+  const [modal, setModal] = useState(() =>
+      invitationCode() !== null ? "invite" : null,
+    ),
     [authAction, setAuthAction] = useState("register"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -324,6 +338,8 @@ function App() {
     gameId = useRef(null),
     finishedId = useRef(null);
   const closeModal = useCallback(() => {
+    pending.current = null;
+    clearInvitationUrl();
     setModal(null);
     setError("");
   }, []);
@@ -381,6 +397,7 @@ function App() {
       setNow(Date.now() + (snapshot.serverNow - Date.now()));
       setAnswer("");
       if (gameId.current !== snapshot.id) {
+        clearInvitationUrl();
         gameId.current = snapshot.id;
         setSelectedIndex(0);
         jumpTo("game");
@@ -456,8 +473,41 @@ function App() {
     setError("");
     setModal("config");
   }
+  async function joinInvitation() {
+    setError("");
+    if (!user) {
+      pending.current = { invite: true, roomCode: inviteCode };
+      setModal("auth");
+      return;
+    }
+    setBusy(true);
+    try {
+      await send("room:join", { code: inviteCode });
+      clearInvitationUrl();
+      setModal(null);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyInvitation(value, label) {
+    try {
+      if (!navigator.clipboard?.writeText)
+        throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(value);
+      setShareStatus(`${label} скопирован${label === "Ссылка" ? "а" : ""}.`);
+    } catch {
+      setShareStatus(
+        label === "Ссылка"
+          ? "Выдели и скопируй ссылку из поля ниже."
+          : "Скопируй код вручную.",
+      );
+    }
+  }
   async function startGame() {
     setError("");
+    setShareStatus("");
     let valid;
     try {
       valid = validateConfig({
@@ -513,11 +563,14 @@ function App() {
       });
       setUser(response.user);
       if (pending.current) {
-        setConfig(pending.current);
-        setNetwork(pending.current.network);
-        setRoomCode(pending.current.roomCode);
+        if (pending.current.invite) setModal("invite");
+        else {
+          setConfig(pending.current);
+          setNetwork(pending.current.network);
+          setRoomCode(pending.current.roomCode);
+          setModal("config");
+        }
         pending.current = null;
-        setModal("config");
       } else setModal(null);
       refresh();
     } catch (e) {
@@ -1094,6 +1147,45 @@ function App() {
           </footer>
         </main>
       </div>
+      {modal === "invite" && (
+        <Modal title="Приглашение на арену" onClose={closeModal}>
+          {/^[A-Z0-9]{6}$/.test(inviteCode) ? (
+            <>
+              <p className="muted center">
+                Тебя пригласили в комнату для двух игроков. Режим и задания
+                выбрал создатель комнаты. Рейтинг не меняется.
+              </p>
+              <div className="room-code">{inviteCode}</div>
+              <button
+                className="button primary full-width"
+                disabled={busy || !!activeGame || (!!user && !connected)}
+                onClick={joinInvitation}
+              >
+                {busy
+                  ? "Подождите…"
+                  : !user
+                    ? "Войти и присоединиться"
+                    : !connected
+                      ? "Подключаемся…"
+                      : "Присоединиться"}{" "}
+                <ArrowRight size={16} />
+              </button>
+              {!!activeGame && (
+                <p className="muted">Сначала заверши текущий матч.</p>
+              )}
+            </>
+          ) : (
+            <p className="error-message" role="alert">
+              Некорректная ссылка приглашения. Попроси друга прислать новую.
+            </p>
+          )}
+          {error && (
+            <p className="error-message" role="alert">
+              {error}
+            </p>
+          )}
+        </Modal>
+      )}
       {modal === "auth" && (
         <Modal
           title={
@@ -1381,20 +1473,41 @@ function App() {
           {queue.status === "room" ? (
             <>
               <p className="muted center">
-                Передай код другу. Вход через «С другом → Ввести код».
+                Отправь другу ссылку — он сможет открыть комнату и
+                присоединиться. Или передай код для входа вручную.
               </p>
               <div className="room-code">{queue.code}</div>
+              <label className="form-field room-invite-link">
+                <span className="field-label">Ссылка приглашения</span>
+                <input
+                  aria-label="Ссылка приглашения"
+                  readOnly
+                  value={`${window.location.origin}/?room=${queue.code}`}
+                  onFocus={(event) => event.target.select()}
+                />
+              </label>
+              <button
+                className="button primary"
+                onClick={() =>
+                  copyInvitation(
+                    `${window.location.origin}/?room=${queue.code}`,
+                    "Ссылка",
+                  )
+                }
+              >
+                Скопировать ссылку <ArrowUpRight size={16} />
+              </button>
               <button
                 className="button secondary"
-                onClick={() =>
-                  navigator.clipboard
-                    ?.writeText(queue.code)
-                    .then(() => setError("Код скопирован."))
-                    .catch(() => setError("Скопируй код вручную."))
-                }
+                onClick={() => copyInvitation(queue.code, "Код")}
               >
                 Скопировать код
               </button>
+              {shareStatus && (
+                <p className="muted" role="status">
+                  {shareStatus}
+                </p>
+              )}
             </>
           ) : (
             <p className="muted center">

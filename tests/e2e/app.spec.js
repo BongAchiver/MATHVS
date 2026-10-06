@@ -515,6 +515,111 @@ test("two browser accounts join a private room and play a complete live match", 
   }
 });
 
+test("room links copy, survive guest registration, report a closed room and use the host settings", async ({
+  browser,
+}) => {
+  const hostContext = await browser.newContext({
+    permissions: ["clipboard-read", "clipboard-write"],
+  });
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage(),
+    guest = await guestContext.newPage();
+  try {
+    const suffix = Date.now().toString(36);
+    await hostContext.request.post("/api/auth/register", {
+      data: { username: `LinkHost_${suffix}`, password: "test-password-123" },
+    });
+    await host.goto("/");
+    async function createRoom() {
+      await host.locator(".mode-card.long").click();
+      await host.getByLabel("Дисциплина").selectOption("discrete");
+      await host.getByRole("button", { name: "С другом", exact: true }).click();
+      const create = host
+        .getByRole("button", { name: "Создать комнату", exact: true })
+        .last();
+      await expect(create).toBeEnabled();
+      await create.click();
+      await expect(host.getByLabel("Ссылка приглашения")).toBeVisible();
+      return host.getByLabel("Ссылка приглашения").inputValue();
+    }
+    const closedLink = await createRoom();
+    await host.getByRole("button", { name: "Отменить", exact: true }).click();
+    await expect(host.getByRole("dialog")).toHaveCount(0);
+    const link = await createRoom();
+    await host
+      .getByRole("button", { name: "Скопировать ссылку", exact: true })
+      .click();
+    await expect(host.getByRole("status")).toHaveText("Ссылка скопирована.");
+    expect(await host.evaluate(() => navigator.clipboard.readText())).toBe(
+      link,
+    );
+    await guest.goto(closedLink);
+    await expect(guest.getByRole("dialog")).toContainText(
+      "Приглашение на арену",
+    );
+    await guest.getByRole("button", { name: "Войти и присоединиться" }).click();
+    await guest.getByLabel("Никнейм").fill(`LinkGuest_${suffix}`);
+    await guest
+      .getByLabel("Пароль · минимум 8 символов")
+      .fill("test-password-123");
+    await guest
+      .getByRole("button", { name: "Создать аккаунт", exact: true })
+      .click();
+    await expect(guest.getByRole("dialog")).toContainText(
+      "Приглашение на арену",
+    );
+    await guest
+      .getByRole("button", { name: "Присоединиться", exact: true })
+      .click();
+    await expect(guest.getByRole("alert")).toContainText(
+      "Комната не найдена или истекла",
+    );
+    await guest.goto(link);
+    await expect(guest.getByRole("dialog")).toContainText(
+      "Приглашение на арену",
+    );
+    await expect(host.locator(".room-code")).toBeVisible();
+    await guest
+      .getByRole("button", { name: "Присоединиться", exact: true })
+      .click();
+    await expect(host.locator(".game-header h1")).toHaveText("Long Call");
+    await expect(guest.locator(".game-header h1")).toHaveText("Long Call");
+    expect(new URL(guest.url()).searchParams.has("room")).toBe(false);
+    await expect(guest.locator(".question-text")).toHaveText(
+      await host.locator(".question-text").textContent(),
+    );
+    for (const page of [host, guest]) {
+      for (let i = 0; i < 2; i++) {
+        await expect(page.locator(".answer-input")).toBeEnabled({
+          timeout: 5000,
+        });
+        await page.locator(".answer-input").fill("0");
+        await page.getByRole("button", { name: "Принять ответ" }).click();
+      }
+    }
+    await expect(guest.locator(".result-panel")).toBeVisible();
+  } finally {
+    await hostContext.close();
+    await guestContext.close();
+  }
+});
+
+test("invalid room invitation is dismissible and preserves unrelated URL parameters", async ({
+  page,
+}) => {
+  await page.goto("/?room=bad-link&source=friend#arena");
+  await expect(page.getByRole("alert")).toContainText(
+    "Некорректная ссылка приглашения",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(new URL(page.url()).searchParams.get("source")).toBe("friend");
+  expect(new URL(page.url()).hash).toBe("#arena");
+  expect(new URL(page.url()).searchParams.has("room")).toBe(false);
+  await page.reload();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
 test("ranked matchmaking updates profile, leaderboard and history", async ({
   browser,
 }) => {
