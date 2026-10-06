@@ -92,7 +92,7 @@ export default function Arena({
         </header>
         <figure className="arena-portrait" aria-hidden="true">
           <img
-            src="/art/arena-portrait.png"
+            src="/art/arena-portrait-v2.webp"
             alt=""
             width="1024"
             height="1536"

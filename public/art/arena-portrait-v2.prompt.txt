@@ -1,0 +1,9 @@
+Tool: built-in image_gen. Edit target: arena-portrait.png.
+Preserve character identity, thoughtful pose, dark blue hair, blue eyes,
+portrait composition and the site's blue/cyan ink-and-cel-shading aesthetic.
+Replace fantasy armor, straps, buckles and jewelry with a normal white cotton
+overshirt with rolled cuffs over a plain navy crewneck tee and dark trousers.
+Give him one ordinary navy ballpoint pen with one silver tip, naturally held.
+Use coherent anatomy, simple clothing seams, restrained folds and clean
+hand-inked outlines. Reduce glossy, over-rendered details. No text or logos.
+Transparent background. Generated output inspected and integrated as v2.

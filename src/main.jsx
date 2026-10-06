@@ -16,6 +16,7 @@ import {
   LogOut,
   Target,
   Clock3,
+  Music2,
 } from "lucide-react";
 import {
   DISCIPLINES,
@@ -31,13 +32,20 @@ import {
   answerPractice,
   expirePractice,
 } from "./practice.js";
-import { installButtonSounds, setAudio } from "./audio.js";
+import {
+  installButtonSounds,
+  setAudio,
+  setMusic,
+  setMusicFocus,
+} from "./audio.js";
 import Arena from "./Arena.jsx";
+import PageBanner from "./PageBanner.jsx";
 import { BANK_STATS } from "../shared/questions/index.js";
 import { useSceneNavigation } from "./useSceneNavigation.js";
 import "./styles.css";
 import "./extras.css";
 import "./persona.css";
+import "./league.css";
 const readLocal = (key, fallback) => {
   try {
     return JSON.parse(localStorage.getItem(key)) ?? fallback;
@@ -138,7 +146,9 @@ function Modal({ title, children, onClose }) {
 }
 function Leaderboard({ players, full = false, onMore }) {
   return (
-    <section className="panel">
+    <section
+      className={`panel leaderboard-panel ${full ? "leaderboard-full" : ""}`}
+    >
       <div className="panel-heading">
         <h2>
           <Trophy size={16} /> {full ? "Общий рейтинг" : "Вершина арены"}
@@ -196,7 +206,10 @@ function Leaderboard({ players, full = false, onMore }) {
         </div>
       ) : (
         <div className="empty-state">
-          <Trophy size={26} />
+          <span className="empty-rank" aria-hidden="true">
+            01
+          </span>
+          <strong className="empty-title">ТВОЁ МЕСТО НАВЕРХУ.</strong>
           <p>
             Первое место пока свободно.
             <br />
@@ -287,6 +300,9 @@ function App() {
     [connected, setConnected] = useState(false),
     [stats, setStats] = useState({ online: 0 }),
     [apiOffline, setApiOffline] = useState(false);
+  const [music, setMusicEnabled] = useState(() =>
+    readLocal("mathvs-music", false),
+  );
   const [practices, setPractices] = useState(() => {
     const p = readLocal("mathvs-practice", []);
     return Array.isArray(p) ? p : [];
@@ -296,6 +312,11 @@ function App() {
     setAudio(sound);
     saveLocal("mathvs-ui-sound", sound);
   }, [sound]);
+  useEffect(() => {
+    setMusic(music);
+    saveLocal("mathvs-music", music);
+  }, [music]);
+  useEffect(() => setMusicFocus(page === "game"), [page]);
   const socket = useRef(null),
     practice = useRef(null),
     savedPractice = useRef(null),
@@ -572,7 +593,14 @@ function App() {
             onClick={() => navigate("arena")}
             aria-label="MATHVS — главная"
           >
-            <span className="brand-mark">M</span>MATH<span>VS</span>
+            <img
+              className="brand-mark"
+              src="/favicon.svg"
+              alt=""
+              width="36"
+              height="36"
+            />
+            MATH<span>VS</span>
           </button>
           <nav className="nav-links" aria-label="Основная навигация">
             {[
@@ -607,6 +635,20 @@ function App() {
               }}
             >
               {sound ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            </button>
+            <button
+              className="sound-toggle music-toggle"
+              aria-label={music ? "Выключить музыку" : "Включить музыку"}
+              aria-pressed={music}
+              title={
+                music ? "Выключить фоновую музыку" : "Включить фоновую музыку"
+              }
+              onClick={() => {
+                setMusic(!music);
+                setMusicEnabled(!music);
+              }}
+            >
+              <Music2 size={17} />
             </button>
             <button
               className="profile-chip"
@@ -650,13 +692,19 @@ function App() {
             </Arena>
           )}
           {page === "rating" && (
-            <section className="subpage">
-              <div className="eyebrow">Дорога к вершине</div>
-              <h1 className="page-title">СИЛЬНЕЙШИЕ УМЫ.</h1>
-              <p className="muted">
-                Общий рейтинг для всех дисциплин. Начни с 1000 MR и найди свою
-                лигу.
-              </p>
+            <section className="subpage ranking-page">
+              <PageBanner
+                kind="rating"
+                title="СИЛЬНЕЙШИЕ УМЫ."
+                subtitle="Каждый ответ меняет расстановку сил. Начни с 1000 MR и найди свою лигу."
+              >
+                <button
+                  className="button primary"
+                  onClick={() => navigate("arena")}
+                >
+                  На арену <ArrowRight size={17} />
+                </button>
+              </PageBanner>
               <div className="tier-strip">
                 {TIERS.map((t) => (
                   <span key={t.name} className="tier-badge">
@@ -664,16 +712,20 @@ function App() {
                   </span>
                 ))}
               </div>
-              <Leaderboard players={players} full />
+              <div className="ranking-layout">
+                <Leaderboard players={players} full />
+                <PersonalCard user={user} onAuth={() => setModal("auth")} />
+              </div>
             </section>
           )}
           {page === "profile" && (
-            <section className="subpage">
-              <div className="eyebrow">Личное дело</div>
-              <div className="profile-heading">
-                <h1 className="page-title">
-                  {user?.username || "ТВОЯ ИСТОРИЯ."}
-                </h1>
+            <section className="subpage profile-page">
+              <PageBanner
+                kind="profile"
+                title={user?.username || "ТВОЯ ИСТОРИЯ."}
+                user={user}
+                subtitle="Точность становится привычкой. Каждый раунд — часть твоей истории."
+              >
                 {user ? (
                   <button
                     className="button secondary small"
@@ -699,11 +751,14 @@ function App() {
                     Создать аккаунт
                   </button>
                 )}
-              </div>
+              </PageBanner>
               <div className="dashboard-bottom">
                 <PersonalCard user={user} onAuth={() => setModal("auth")} />
-                <div className="panel">
-                  <h2>Опыт растёт с каждым матчем</h2>
+                <div className="panel experience-card">
+                  <div className="panel-heading">
+                    <h2>Опыт растёт с каждым матчем</h2>
+                    <span>LEVEL / XP</span>
+                  </div>
                   <p className="muted">
                     Рейтинговый матч: 30 XP + 15 XP за верный ответ + 50 XP за
                     победу. Уровень показывает опыт, тир — твой рейтинг.
@@ -936,7 +991,7 @@ function App() {
               </div>
               <div className="result-slash" aria-hidden="true" />
               <div className="result-art" aria-hidden="true">
-                <img src="/art/arena-portrait.png" alt="" />
+                <span className="result-mark">GG</span>
               </div>
               <div className="eyebrow">
                 {game.offline
@@ -1028,6 +1083,14 @@ function App() {
               Правила арены <ArrowUpRight size={12} />
             </button>
             <span>ТОЧНОСТЬ. СКОРОСТЬ. ХАРАКТЕР.</span>
+            <a
+              className="music-credit"
+              href="https://commons.wikimedia.org/wiki/File:Statusq_-_3_am_West_End.opus"
+              target="_blank"
+              rel="noreferrer"
+            >
+              MUSIC / 3 am West End — statusq · CC0
+            </a>
           </footer>
         </main>
       </div>

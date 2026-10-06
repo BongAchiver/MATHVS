@@ -11,12 +11,11 @@ DURATION = 0.19
 def voice(t):
     if t <= 0:
         return 0.0
-    attack = 1 - math.exp(-((t / 0.004) ** 2))
-    phase = 2 * math.pi * (620 * t + 95 * 0.012 * (1 - math.exp(-t / 0.012)))
-    body = math.sin(phase + 0.65 * math.exp(-t / 0.018) * math.sin(phase * 2))
-    glass = 0.20 * math.sin(phase * 2.76) * math.exp(-t / 0.020)
-    warmth = 0.15 * math.sin(phase * 0.5) * math.exp(-t / 0.027)
-    return attack * (body * math.exp(-t / 0.032) + glass + warmth)
+    attack = 1 - math.exp(-((t / 0.010) ** 2))
+    phase = 2 * math.pi * (380 * t + 18 * 0.020 * (1 - math.exp(-t / 0.020)))
+    body = math.sin(phase)
+    warmth = 0.22 * math.sin(phase * 0.5) * math.exp(-t / 0.050)
+    return attack * (body * math.exp(-t / 0.038) + warmth)
 
 
 frames = []
@@ -28,8 +27,8 @@ for i in range(round(RATE * DURATION)):
     frames.append((left, right))
 
 peak = max(abs(sample) for frame in frames for sample in frame)
-pcm = b"".join(struct.pack("<hh", *(round(sample / peak * 0.65 * 32767) for sample in frame)) for frame in frames)
-target = Path(__file__).resolve().parent.parent / "public/audio/ui-press-v2.wav"
+pcm = b"".join(struct.pack("<hh", *(round(sample / peak * 0.28 * 32767) for sample in frame)) for frame in frames)
+target = Path(__file__).resolve().parent.parent / "public/audio/ui-press-v3.wav"
 target.parent.mkdir(parents=True, exist_ok=True)
 with wave.open(str(target), "wb") as wav:
     wav.setnchannels(2)

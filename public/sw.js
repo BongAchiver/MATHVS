@@ -1,4 +1,4 @@
-const CACHE = "mathvs-v3";
+const CACHE = "mathvs-v4";
 self.addEventListener("install", (event) =>
   event.waitUntil(
     (async () => {
@@ -11,9 +11,9 @@ self.addEventListener("install", (event) =>
       await cache.addAll([
         "/",
         "/favicon.svg",
-        "/art/arena-portrait.png",
+        "/art/arena-portrait-v2.webp",
         "/fonts/oswald.ttf",
-        "/audio/ui-press-v2.wav",
+        "/audio/ui-press-v3.wav",
         ...assets,
       ]);
       await self.skipWaiting();
@@ -21,7 +21,17 @@ self.addEventListener("install", (event) =>
   ),
 );
 self.addEventListener("activate", (event) =>
-  event.waitUntil(self.clients.claim()),
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => key.startsWith("mathvs-") && key !== CACHE)
+          .map((key) => caches.delete(key)),
+      );
+      await self.clients.claim();
+    })(),
+  ),
 );
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
@@ -29,7 +39,8 @@ self.addEventListener("fetch", (event) => {
     event.request.method !== "GET" ||
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api") ||
-    url.pathname.startsWith("/socket.io")
+    url.pathname.startsWith("/socket.io") ||
+    url.pathname.endsWith(".mp3")
   )
     return;
   // Network-first HTML ensures deployments refresh; hashed assets remain safe to cache.

@@ -1,0 +1,536 @@
+/* Cut paper, strong typography and blue light continue the arena. */
+.subpage {
+  padding-top: 0;
+}
+.subpage::before {
+  display: none;
+}
+.page-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 345px;
+  margin: 0 -4.35% 38px;
+  padding: 65px 7% 70px;
+  background: linear-gradient(
+    125deg,
+    #31c5ef -12%,
+    #096be7 35%,
+    #143deb 75%,
+    #070a51
+  );
+}
+.banner-grid {
+  position: absolute;
+  inset: -80%;
+  z-index: -1;
+  transform: rotate(-18deg);
+  background-image:
+    linear-gradient(#a9f7ff18 1px, transparent 1px),
+    linear-gradient(90deg, #a9f7ff18 1px, transparent 1px);
+  background-size: 90px 90px;
+}
+.banner-word {
+  position: absolute;
+  right: 4%;
+  top: -38px;
+  z-index: -1;
+  font: italic 700 clamp(150px, 21vw, 310px) / 1 var(--display);
+  letter-spacing: -10px;
+  transform: rotate(-10deg);
+  color: #03155533;
+}
+.banner-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 72%;
+}
+.page-banner .eyebrow {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: white;
+}
+.page-banner .page-title {
+  font-size: clamp(44px, 6vw, 86px);
+  line-height: 1.06;
+  letter-spacing: -2px;
+  margin: 20px 0 18px;
+  transform: rotate(-3deg);
+  transform-origin: left center;
+  text-shadow: 5px 5px 0 #051663;
+}
+.banner-subtitle {
+  max-width: 440px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #e4faff;
+  margin: 0 0 23px;
+}
+.page-banner .button {
+  min-width: 165px;
+}
+.banner-stripe {
+  position: absolute;
+  bottom: -31px;
+  left: -10%;
+  width: 125%;
+  height: 68px;
+  background: #effcff;
+  transform: rotate(-5deg);
+  border-bottom: 14px solid #030918;
+  z-index: 1;
+}
+.banner-emblem {
+  position: absolute;
+  right: 7%;
+  top: 55px;
+  width: 190px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #030e37;
+  color: white;
+  transform: rotate(8deg) skewY(-6deg);
+  box-shadow: 8px 8px 0 #56efff;
+  border-top: 5px solid white;
+}
+.banner-emblem strong {
+  font: italic 700 115px / 1.1 var(--display);
+  letter-spacing: -5px;
+}
+.emblem-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: #64efff;
+}
+.emblem-caption {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  margin-top: 12px;
+}
+.ranking-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+.tier-strip {
+  gap: 5px;
+  margin: 0 0 32px;
+}
+.tier-strip .tier-badge {
+  flex: 1;
+  padding: 14px 12px;
+  border: 0;
+  border-left: 3px solid #56efff;
+  background: #030d36;
+  transform: skewX(-10deg);
+  color: #d8faff;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.arena-support {
+  padding: 35px 0 12px;
+  margin-top: 0;
+  isolation: isolate;
+}
+.arena-support::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 -4.35%;
+  background: linear-gradient(145deg, #0957d1, #122cba 50%, #080b45);
+}
+.arena-support::before {
+  content: "THE RANKING";
+  display: inline-block;
+  font: italic 700 clamp(38px, 5vw, 65px) / 1 var(--display);
+  transform: rotate(-3deg);
+  text-shadow: 4px 4px 0 #031b64;
+  margin-bottom: 13px;
+}
+.arena-support .section-heading {
+  margin-top: 15px;
+}
+.arena-support .dashboard-bottom,
+.profile-page .dashboard-bottom {
+  gap: 26px;
+}
+.arena-support .panel,
+.subpage .panel {
+  position: relative;
+  min-width: 0;
+  border: 0;
+  background: #030d30;
+  box-shadow: 7px 7px 0 #02071f;
+  padding: 24px;
+  border-bottom: 3px solid #56efff;
+}
+.arena-support .panel-heading,
+.subpage .panel-heading {
+  margin: -24px -24px 25px;
+  padding: 17px 24px;
+  background: #f1fbff;
+  color: #051333;
+  border-bottom: 4px solid #54eaff;
+  position: relative;
+}
+.arena-support .panel-heading h2,
+.subpage .panel-heading h2 {
+  font: italic 700 21px / 1.25 var(--display);
+  letter-spacing: 0.25px;
+}
+.arena-support .panel-heading .text-button,
+.subpage .panel-heading > span {
+  color: #1248b2;
+  font-size: 10px;
+}
+.arena-support .panel-heading .tier-badge,
+.subpage .panel-heading .tier-badge {
+  background: #062460;
+  color: #87f5ff;
+  border: 0;
+  padding: 7px 10px;
+  transform: skewX(-9deg);
+}
+.arena-support .personal-card,
+.subpage .personal-card {
+  background: linear-gradient(135deg, #123aa9, #061135);
+}
+.personal-card .rating-big,
+.experience-card .rating-big {
+  font: italic 700 clamp(65px, 6vw, 90px) / 1 var(--display);
+  letter-spacing: -3px;
+  color: white;
+}
+.personal-card .rating-big small,
+.experience-card .rating-big small {
+  font:
+    700 12px Arial,
+    sans-serif;
+  letter-spacing: 1px;
+  color: #71eeff;
+}
+.personal-card .progress-track {
+  height: 8px;
+  background: #040c2c;
+  transform: skewX(-14deg);
+  margin-top: 23px;
+}
+.personal-card .progress-fill {
+  background: #56efff;
+}
+.personal-card .stat-grid {
+  border-top-color: #60deff44;
+}
+.personal-card .stat strong {
+  font: italic 700 30px var(--display);
+}
+.empty-state {
+  position: relative;
+  overflow: hidden;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 30px 18px;
+  text-align: left;
+}
+.empty-rank {
+  position: absolute;
+  right: 12px;
+  bottom: -30px;
+  font: italic 700 200px / 1 var(--display);
+  color: #185bea33;
+  pointer-events: none;
+}
+.empty-title {
+  position: relative;
+  font: italic 700 clamp(26px, 3vw, 40px) / 1.2 var(--display);
+  color: white;
+  transform: rotate(-3deg);
+  margin-bottom: 12px;
+}
+.empty-state p {
+  position: relative;
+  max-width: 360px;
+  font-size: 12px;
+  line-height: 1.9;
+  color: #b6d8ef;
+}
+.leaderboard-table {
+  border-collapse: separate;
+  border-spacing: 0 7px;
+}
+.leaderboard-table th {
+  color: #7bd3ee;
+  font-weight: 700;
+  font-size: 9px;
+  padding-bottom: 5px;
+}
+.leaderboard-table td {
+  background: #0c2052;
+  border: 0;
+  padding: 15px 10px;
+}
+.leaderboard-table tr:last-child td {
+  padding-bottom: 15px;
+}
+.leaderboard-table td:first-child {
+  border-left: 3px solid #2b65cd;
+}
+.leaderboard-table tr:first-child td {
+  background: #143981;
+}
+.leaderboard-table tr:first-child td:first-child {
+  border-left-color: #56efff;
+}
+.leaderboard-table .rank-number {
+  font: italic 700 24px var(--display);
+}
+.leaderboard-table .rating {
+  font: italic 700 24px var(--display);
+  color: #effcff;
+}
+.leaderboard-table .avatar {
+  background: #1856ce;
+  transform: skewX(-8deg);
+}
+.profile-page .dashboard-bottom {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 0;
+}
+.experience-card > .muted {
+  max-width: 440px;
+}
+.subpage > .section-heading {
+  margin: 40px 0 22px;
+}
+.subpage > .section-heading h2,
+.arena-support .section-heading h2 {
+  font: italic 700 25px var(--display);
+  text-transform: uppercase;
+}
+.subpage > .section-heading h2::before {
+  content: "/";
+  color: #56efff;
+  margin-right: 10px;
+}
+.history-item {
+  background: #030d30;
+  border: 0;
+  border-left: 4px solid #56efff;
+  padding: 20px 24px;
+  box-shadow: 5px 5px 0 #02071f;
+}
+.history-item strong {
+  font: italic 600 20px var(--display);
+}
+.subpage > .panel.empty-state {
+  min-height: 110px;
+  border-left: 4px solid #56efff;
+  border-bottom: 0;
+  padding: 25px;
+  font-size: 12px;
+  color: #bbddf4;
+}
+.music-toggle[aria-pressed="true"] {
+  background: #56efff;
+  color: #03102c;
+  border-color: #56efff;
+}
+.topbar .brand-mark {
+  background: transparent;
+  transform: none;
+  object-fit: contain;
+  clip-path: none;
+}
+.music-credit {
+  font-size: 9px;
+  color: #a6c9e8;
+  letter-spacing: 0.3px;
+}
+.footer {
+  flex-wrap: wrap;
+}
+.result-mark {
+  display: block;
+  padding-top: 80px;
+  font: italic 700 clamp(180px, 30vw, 400px) / 1 var(--display);
+  color: #56efff;
+  transform: rotate(-12deg);
+}
+@media (max-width: 1050px) {
+  .banner-emblem {
+    right: 5%;
+    width: 155px;
+    height: 190px;
+  }
+  .banner-emblem strong {
+    font-size: 90px;
+  }
+  .banner-copy {
+    max-width: 73%;
+  }
+  .ranking-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr);
+  }
+}
+@media (max-width: 800px) {
+  .page-banner {
+    margin: 0 -5.56% 30px;
+    padding: 50px 6% 65px;
+    min-height: 330px;
+  }
+  .page-banner .page-title {
+    font-size: 52px;
+  }
+  .banner-emblem {
+    width: 125px;
+    height: 165px;
+    right: 5%;
+    top: 90px;
+  }
+  .banner-emblem strong {
+    font-size: 76px;
+  }
+  .emblem-label,
+  .emblem-caption {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .banner-copy {
+    max-width: 70%;
+  }
+  .ranking-layout,
+  .profile-page .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+  .tier-strip .tier-badge {
+    flex: 1 1 28%;
+  }
+  .arena-support::after {
+    inset-inline: -5.56%;
+  }
+}
+@media (max-width: 580px) {
+  .page-banner {
+    min-height: 360px;
+    padding-top: 42px;
+  }
+  .banner-copy {
+    max-width: 100%;
+  }
+  .page-banner .eyebrow {
+    font-size: 7px;
+    letter-spacing: 1.7px;
+  }
+  .page-banner .page-title {
+    font-size: clamp(38px, 10vw, 56px);
+    max-width: 100%;
+    margin-top: 24px;
+  }
+  .banner-subtitle {
+    max-width: 72%;
+    font-size: 11px;
+  }
+  .banner-emblem {
+    width: 77px;
+    height: 112px;
+    right: 7%;
+    top: auto;
+    bottom: 53px;
+    border-top-width: 3px;
+    box-shadow: 4px 4px 0 #56efff;
+  }
+  .banner-emblem strong {
+    font-size: 52px;
+    letter-spacing: -2px;
+  }
+  .emblem-caption {
+    font-size: 5px;
+    margin-top: 7px;
+  }
+  .emblem-label {
+    font-size: 5px;
+  }
+  .banner-word {
+    top: 12px;
+    right: -5%;
+    font-size: 140px;
+  }
+  .tier-strip {
+    gap: 6px;
+    margin-bottom: 25px;
+  }
+  .tier-strip .tier-badge {
+    padding: 12px 8px;
+    font-size: 8px;
+  }
+  .arena-support .panel,
+  .subpage .panel {
+    padding: 20px 16px;
+    box-shadow: 4px 4px 0 #02071f;
+  }
+  .arena-support .panel-heading,
+  .subpage .panel-heading {
+    margin: -20px -16px 20px;
+    padding: 16px;
+    gap: 8px;
+  }
+  .arena-support .panel-heading h2,
+  .subpage .panel-heading h2 {
+    font-size: 18px;
+  }
+  .empty-state {
+    padding: 20px 0;
+    min-height: 210px;
+  }
+  .empty-title {
+    font-size: 28px;
+  }
+  .empty-rank {
+    font-size: 170px;
+    right: -8px;
+  }
+  .leaderboard-table .player-cell {
+    gap: 6px;
+  }
+  .leaderboard-table .player-cell small {
+    display: none;
+  }
+  .leaderboard-table td {
+    padding: 12px 6px;
+    font-size: 10px;
+  }
+  .leaderboard-table tr:last-child td {
+    padding-bottom: 12px;
+  }
+  .leaderboard-table th {
+    font-size: 7px;
+    padding-inline: 6px;
+  }
+  .leaderboard-table .rank-number,
+  .leaderboard-table .rating {
+    font-size: 19px;
+  }
+  .leaderboard-table .tier-badge {
+    font-size: 7px;
+    padding: 4px;
+  }
+  .leaderboard-table .avatar {
+    display: none;
+  }
+  .subpage > .section-heading h2 {
+    font-size: 21px;
+  }
+  .history-item {
+    padding: 16px;
+  }
+  .music-credit {
+    flex-basis: 100%;
+  }
+}

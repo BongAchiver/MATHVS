@@ -103,6 +103,96 @@ test("page switches only under the completed wipe, even on a throttled CPU", asy
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
 });
 
+test("background recording is opt-in, quiet in a match, and pauses in a hidden tab", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function (...args) {
+      window.backgroundAudio = this;
+      return play.apply(this, args);
+    };
+  });
+  await page.goto("/");
+  expect(await page.evaluate(() => !!window.backgroundAudio)).toBe(false);
+  await page
+    .getByRole("button", { name: "Включить музыку", exact: true })
+    .click();
+  await expect
+    .poll(() => page.evaluate(() => window.backgroundAudio?.currentTime || 0))
+    .toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.backgroundAudio.src)).toContain(
+    "/audio/3-am-west-end.mp3",
+  );
+  await expect
+    .poll(() => page.evaluate(() => window.backgroundAudio.volume))
+    .toBeCloseTo(0.12, 2);
+  await page.locator(".mode-card.blitz").click();
+  await page.getByRole("button", { name: "Начать тренировку" }).click();
+  await expect
+    .poll(() => page.evaluate(() => window.backgroundAudio.volume))
+    .toBeCloseTo(0.045, 3);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  expect(await page.evaluate(() => window.backgroundAudio.paused)).toBe(true);
+  await page.evaluate(() => {
+    delete document.hidden;
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect
+    .poll(() => page.evaluate(() => window.backgroundAudio.paused))
+    .toBe(false);
+  await page.reload();
+  expect(await page.evaluate(() => !!window.backgroundAudio)).toBe(false);
+  await page
+    .getByRole("button", { name: "Выключить музыку", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Включить музыку", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
+  expect(
+    await page.evaluate(
+      () => !window.backgroundAudio || window.backgroundAudio.paused,
+    ),
+  ).toBe(true);
+});
+
+test("rating and profile share the arena typography and fit desktop and mobile", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [label, kind] of [
+      ["Рейтинг", "rating"],
+      ["Профиль", "profile"],
+    ]) {
+      await page.getByRole("button", { name: label, exact: true }).click();
+      await expect(page.locator(`.banner-${kind}`)).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      const heading = page.locator(".page-banner h1");
+      await expect(heading).toBeVisible();
+      expect(
+        await heading.evaluate((e) => getComputedStyle(e).fontFamily),
+      ).toContain("Oswald");
+      await page.screenshot({
+        path: `test-results/${kind}-${width}.png`,
+        fullPage: true,
+      });
+    }
+  }
+});
+
 test("idle arena schedules no game timer and pointer movement does not mutate the portrait", async ({
   page,
 }) => {
